@@ -9,10 +9,10 @@ import {
   Modal,
   TextInput,
   Alert,
-  Platform,
-  StatusBar,
   Linking,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing } from '@/constants/theme';
@@ -20,6 +20,7 @@ import { useAppStore } from '@/store/app-store';
 
 export default function MoreScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { state, login, logout } = useAppStore();
   const { isAuthenticated: isLoggedIn, user } = state;
 
@@ -120,7 +121,8 @@ export default function MoreScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <StatusBar style="dark" />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* User Card */}
         <View style={styles.userCard}>
@@ -379,7 +381,7 @@ export default function MoreScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -387,7 +389,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.light.background,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   userCard: {
     flexDirection: 'row',

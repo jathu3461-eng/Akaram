@@ -8,10 +8,9 @@ import {
   ScrollView,
   Image,
   Dimensions,
-  SafeAreaView,
-  Platform,
-  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing } from '@/constants/theme';
@@ -25,6 +24,7 @@ const latestArticles = articles.slice(0, 3);
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('');
 
@@ -33,8 +33,8 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.light.primary} />
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <StatusBar style="dark" />
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
         {/* Top Header */}
@@ -288,7 +288,7 @@ export default function HomeScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -296,7 +296,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.light.background,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   container: { flex: 1 },
   header: {

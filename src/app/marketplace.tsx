@@ -13,8 +13,9 @@ import {
   Dimensions,
   Alert,
   Platform,
-  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing } from '@/constants/theme';
 import { useAppStore, type MarketplaceItem } from '@/store/app-store';
@@ -23,6 +24,7 @@ import { marketplaceItems as initialProducts, marketplaceCategories } from '@/da
 const { width } = Dimensions.get('window');
 
 export default function MarketplaceScreen() {
+  const insets = useSafeAreaInsets();
   const { state: appState, addToCart, removeFromCart, cartTotal, clearCart } = useAppStore();
 
   const [products, setProducts] = useState<MarketplaceItem[]>(initialProducts);
@@ -86,7 +88,8 @@ export default function MarketplaceScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <StatusBar style="dark" />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -350,7 +353,7 @@ export default function MarketplaceScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -358,7 +361,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.light.background,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     paddingHorizontal: Spacing.four,

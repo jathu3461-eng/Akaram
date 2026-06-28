@@ -11,15 +11,16 @@ import {
   Modal,
   ScrollView,
   Alert,
-  Platform,
-  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing } from '@/constants/theme';
 import { obituaries as initialObituaries } from '@/data/mock-data';
 import type { Obituary } from '@/store/app-store';
 
 export default function RipBookScreen() {
+  const insets = useSafeAreaInsets();
   const [obituaries, setObituaries] = useState<Obituary[]>(initialObituaries);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedObituary, setSelectedObituary] = useState<Obituary | null>(null);
@@ -71,7 +72,8 @@ export default function RipBookScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <StatusBar style="dark" />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -233,7 +235,7 @@ export default function RipBookScreen() {
           </SafeAreaView>
         )}
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -241,7 +243,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.light.background,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     paddingHorizontal: Spacing.four,

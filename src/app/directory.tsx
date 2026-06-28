@@ -12,8 +12,9 @@ import {
   Modal,
   ScrollView,
   Platform,
-  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing } from '@/constants/theme';
@@ -23,6 +24,7 @@ import type { Business } from '@/store/app-store';
 const allCategories = ['All', ...mockCategories.map(c => c.name)];
 
 export default function DirectoryScreen() {
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ q?: string; loc?: string; category?: string; id?: string }>();
   const [searchQuery, setSearchQuery] = useState(params.q || '');
   const [selectedCategory, setSelectedCategory] = useState(params.category || 'All');
@@ -52,7 +54,8 @@ export default function DirectoryScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <StatusBar style="dark" />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
@@ -244,7 +247,7 @@ export default function DirectoryScreen() {
           </SafeAreaView>
         )}
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -252,7 +255,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.light.background,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     paddingHorizontal: Spacing.four,

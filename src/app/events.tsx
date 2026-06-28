@@ -9,10 +9,10 @@ import {
   SafeAreaView,
   Modal,
   ScrollView,
-  Platform,
-  StatusBar,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing } from '@/constants/theme';
@@ -30,6 +30,7 @@ const categoryColors: Record<string, string> = {
 
 export default function EventsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -39,7 +40,8 @@ export default function EventsScreen() {
     : events.filter(e => e.category === selectedCategory);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <StatusBar style="dark" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={Colors.light.text} />
@@ -167,7 +169,7 @@ export default function EventsScreen() {
           </SafeAreaView>
         )}
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -175,7 +177,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.light.background,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     flexDirection: 'row',

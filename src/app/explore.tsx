@@ -1,180 +1,310 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  Image,
+  ScrollView,
+  Platform,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Spacing } from '@/constants/theme';
+import { businesses, categories, events, articles } from '@/data/mock-data';
 
-import { ExternalLink } from '@/components/external-link';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+export default function ExploreScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'businesses' | 'events' | 'articles'>('businesses');
 
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
-  };
-  const theme = useTheme();
-
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
+  const filtered = businesses.filter(b =>
+    b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.location.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
-          </ThemedText>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar style="dark" />
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Explore</Text>
+        <Text style={styles.headerSub}>Discover Tamil businesses, events & articles</Text>
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={18} color={Colors.light.textSecondary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search everything..."
+            placeholderTextColor="#9CA3AF"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery ? (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={18} color={Colors.light.textSecondary} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </View>
+
+      {/* Tabs */}
+      <View style={styles.tabsRow}>
+        {(['businesses', 'events', 'articles'] as const).map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tabBtn, activeTab === tab && styles.tabBtnActive]}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Text style={[styles.tabBtnText, activeTab === tab && styles.tabBtnTextActive]}>
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Content */}
+      {activeTab === 'businesses' && (
+        <FlatList
+          data={searchQuery ? filtered : businesses}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[styles.listContainer, { paddingBottom: insets.bottom + 80 }]}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            !searchQuery ? (
+              <View>
+                {/* Categories */}
+                <Text style={styles.sectionTitle}>Browse by Category</Text>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={categories}
+                  keyExtractor={(c) => c.id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.catChip}
+                      onPress={() => router.push({ pathname: '/directory', params: { category: item.name } })}
+                    >
+                      <Ionicons name={item.icon as any} size={14} color={Colors.light.primary} />
+                      <Text style={styles.catChipText}>{item.name}</Text>
+                    </TouchableOpacity>
+                  )}
+                  contentContainerStyle={styles.catsScroll}
                 />
-              </ThemedView>
-            </Pressable>
-          </ExternalLink>
-        </ThemedView>
+                <Text style={[styles.sectionTitle, { marginTop: 16 }]}>All Businesses</Text>
+              </View>
+            ) : null
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.resultCard}
+              onPress={() => router.push({ pathname: '/directory', params: { id: item.id } })}
+              activeOpacity={0.85}
+            >
+              <Image source={{ uri: item.image }} style={styles.resultImage} />
+              <View style={styles.resultContent}>
+                <View style={styles.resultBadgeRow}>
+                  <View style={styles.catBadge}>
+                    <Text style={styles.catBadgeText}>{item.category}</Text>
+                  </View>
+                  <View style={styles.ratingRow}>
+                    <Ionicons name="star" size={11} color="#F59E0B" />
+                    <Text style={styles.ratingText}>{item.rating}</Text>
+                  </View>
+                </View>
+                <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
+                <View style={styles.locationRow}>
+                  <Ionicons name="location-outline" size={12} color={Colors.light.textSecondary} />
+                  <Text style={styles.locationText}>{item.location}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      )}
 
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+      {activeTab === 'events' && (
+        <FlatList
+          data={events}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[styles.listContainer, { paddingBottom: insets.bottom + 80 }]}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.eventCard}
+              onPress={() => router.push('/events')}
+              activeOpacity={0.85}
+            >
+              <Image source={{ uri: item.image }} style={styles.eventImage} />
+              <View style={styles.eventContent}>
+                <Text style={styles.eventCategory}>{item.category}</Text>
+                <Text style={styles.eventTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.eventMeta}>
+                  <Ionicons name="calendar-outline" size={13} color={Colors.light.primary} />
+                  <Text style={styles.eventMetaText}>{item.date}</Text>
+                  <Text style={styles.eventMetaDot}>·</Text>
+                  <Ionicons name="location-outline" size={13} color={Colors.light.textSecondary} />
+                  <Text style={styles.eventMetaText} numberOfLines={1}>{item.location.split(',')[0]}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      )}
 
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
-
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
+      {activeTab === 'articles' && (
+        <FlatList
+          data={articles}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[styles.listContainer, { paddingBottom: insets.bottom + 80 }]}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.articleCard}
+              onPress={() => router.push({ pathname: '/articles', params: { id: item.id } })}
+              activeOpacity={0.85}
+            >
+              <Image source={{ uri: item.image }} style={styles.articleImage} />
+              <View style={styles.articleContent}>
+                <Text style={styles.articleCat}>{item.category}</Text>
+                <Text style={styles.articleTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.articleMeta}>
+                  <Text style={styles.articleAuthor}>{item.author}</Text>
+                  <Text style={styles.articleDot}>·</Text>
+                  <Text style={styles.articleRead}>{item.readTime}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
+  container: { flex: 1, backgroundColor: Colors.light.background },
+  header: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: 14,
+    paddingBottom: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
   },
-  contentContainer: {
+  headerTitle: { fontSize: 22, fontWeight: '800', color: Colors.light.text },
+  headerSub: { fontSize: 12, color: Colors.light.textSecondary, marginTop: 2 },
+  searchContainer: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+  },
+  searchBar: {
     flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
-  },
-  titleContainer: {
-    gap: Spacing.three,
     alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
+    backgroundColor: Colors.light.surfaceContainerLow,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === 'ios' ? 11 : 8,
+    gap: 8,
   },
-  centerText: {
-    textAlign: 'center',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  linkButton: {
+  searchInput: { flex: 1, fontSize: 15, color: Colors.light.text },
+  tabsRow: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    justifyContent: 'center',
-    gap: Spacing.one,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+    paddingHorizontal: Spacing.three,
+    paddingBottom: 0,
+  },
+  tabBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    marginRight: 4,
+  },
+  tabBtnActive: { borderBottomColor: Colors.light.primary },
+  tabBtnText: { fontSize: 14, fontWeight: '600', color: Colors.light.textSecondary },
+  tabBtnTextActive: { color: Colors.light.primary },
+  listContainer: { padding: Spacing.three },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: Colors.light.text, marginBottom: 10 },
+  catsScroll: { paddingBottom: 6 },
+  catChip: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginRight: 8,
+    gap: 5,
+    borderWidth: 1,
+    borderColor: '#FECACA',
   },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
+  catChipText: { fontSize: 12, fontWeight: '600', color: Colors.light.primary },
+  resultCard: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginBottom: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.light.border,
   },
-  collapsibleContent: {
-    alignItems: 'center',
+  resultImage: { width: 90, height: 90, backgroundColor: '#f3f4f6' },
+  resultContent: { flex: 1, padding: 10, justifyContent: 'center' },
+  resultBadgeRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
+  catBadge: { backgroundColor: '#FEF2F2', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
+  catBadgeText: { fontSize: 9, fontWeight: '700', color: Colors.light.primary, textTransform: 'uppercase' },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  ratingText: { fontSize: 11, fontWeight: '700', color: Colors.light.text },
+  resultName: { fontSize: 14, fontWeight: '700', color: Colors.light.text, marginBottom: 5 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  locationText: { fontSize: 11, color: Colors.light.textSecondary },
+  eventCard: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginBottom: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.light.border,
   },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
+  eventImage: { width: 100, height: 90, backgroundColor: '#f3f4f6' },
+  eventContent: { flex: 1, padding: 12, justifyContent: 'center' },
+  eventCategory: { fontSize: 10, fontWeight: '700', color: Colors.light.primary, textTransform: 'uppercase', marginBottom: 4 },
+  eventTitle: { fontSize: 13, fontWeight: '700', color: Colors.light.text, lineHeight: 18, marginBottom: 8 },
+  eventMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
+  eventMetaText: { fontSize: 11, color: Colors.light.textSecondary, fontWeight: '500', flex: 1, minWidth: 0 },
+  eventMetaDot: { color: Colors.light.border, fontSize: 14 },
+  articleCard: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginBottom: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.light.border,
   },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
-  },
+  articleImage: { width: 90, height: 90, backgroundColor: '#f3f4f6' },
+  articleContent: { flex: 1, padding: 12, justifyContent: 'center' },
+  articleCat: { fontSize: 10, fontWeight: '700', color: Colors.light.primary, textTransform: 'uppercase', marginBottom: 4 },
+  articleTitle: { fontSize: 13, fontWeight: '700', color: Colors.light.text, lineHeight: 18, marginBottom: 8 },
+  articleMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  articleAuthor: { fontSize: 11, color: Colors.light.textSecondary },
+  articleDot: { color: Colors.light.border },
+  articleRead: { fontSize: 11, color: Colors.light.textSecondary },
 });

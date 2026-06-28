@@ -9,10 +9,10 @@ import {
   SafeAreaView,
   Modal,
   ScrollView,
-  Platform,
-  StatusBar,
   TextInput,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing } from '@/constants/theme';
@@ -23,6 +23,7 @@ const articleCategories = ['All', 'Canada Life', 'Food', 'Community', 'Sports', 
 
 export default function ArticlesScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id?: string }>();
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(
     params.id ? articles.find(a => a.id === params.id) || null : null
@@ -37,7 +38,8 @@ export default function ArticlesScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <StatusBar style="dark" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={Colors.light.text} />
@@ -162,7 +164,7 @@ export default function ArticlesScreen() {
           </SafeAreaView>
         )}
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -170,7 +172,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.light.background,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Platform, Dimensions } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { Colors, Spacing } from '@/constants/theme';
 
 interface WebPreviewShellProps {

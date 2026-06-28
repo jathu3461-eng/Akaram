@@ -8,46 +8,51 @@ import {
   ScrollView,
   Image,
   Dimensions,
+  SafeAreaView,
+  Modal,
+  FlatList,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing } from '@/constants/theme';
-import { categories, businesses, obituaries, articles, events } from '@/data/mock-data';
+import { categories, businesses, obituaries, locations } from '@/data/mock-data';
 
 const { width } = Dimensions.get('window');
 
-const featuredBusinesses = businesses.slice(0, 4);
+// Derived mock data for home screen
+const featuredBusinesses = businesses.slice(0, 3);
 const latestObituaries = obituaries.slice(0, 2);
-const latestArticles = articles.slice(0, 3);
 
 export default function HomeScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('');
+  const [isLocModalVisible, setIsLocModalVisible] = useState(false);
 
   const handleSearch = () => {
-    router.push({ pathname: '/directory', params: { q: searchQuery, loc: location } });
+    // Navigate to Directory screen with search query parameters
+    router.push({
+      pathname: '/directory',
+      params: { q: searchQuery, loc: location === 'All Locations' ? '' : location },
+    });
+  };
+
+  const handleSelectLocation = (selectedLoc: string) => {
+    setLocation(selectedLoc === 'All Locations' ? '' : selectedLoc);
+    setIsLocModalVisible(false);
   };
 
   return (
-    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-
         {/* Top Header */}
         <View style={styles.header}>
-          <View style={styles.logoRow}>
-            <View style={styles.logoContainer}>
-              <Text style={styles.logoText}>Akaram</Text>
-              <Text style={styles.logoDot}>.ca</Text>
-            </View>
-            <Text style={styles.logoTagline}>Tamil Canadian Directory</Text>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoText}>Akaram</Text>
           </View>
           <View style={styles.headerActions}>
-            <TouchableOpacity onPress={() => router.push('/notifications' as any)} style={styles.iconButton}>
+            <TouchableOpacity onPress={() => router.push('/more')} style={styles.iconButton}>
               <Ionicons name="notifications-outline" size={24} color={Colors.light.text} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => router.push('/marketplace')} style={styles.iconButton}>
@@ -58,123 +63,93 @@ export default function HomeScreen() {
 
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <View style={styles.heroContent}>
-            <Text style={styles.heroTitle}>Find Local Tamil{'\n'}Businesses in Canada</Text>
-            <Text style={styles.heroSubtitle}>
-              Connecting culture, community, and business across Canada
-            </Text>
-          </View>
+          <Text style={styles.heroTitle}>Find Local Tamil Businesses in Canada</Text>
+          <Text style={styles.heroSubtitle}>Connecting culture, community, and business in one place.</Text>
 
-          {/* Search Card */}
+          {/* Search Inputs */}
           <View style={styles.searchCard}>
             <View style={styles.inputWrapper}>
-              <Ionicons name="search-outline" size={20} color={Colors.light.primary} style={styles.inputIcon} />
+              <Ionicons name="search-outline" size={20} color={Colors.light.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Restaurants, Services, Temples..."
-                placeholderTextColor="#9CA3AF"
+                placeholder="What are you looking for?"
+                placeholderTextColor={Colors.light.textSecondary}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                returnKeyType="search"
-                onSubmitEditing={handleSearch}
               />
             </View>
             <View style={styles.divider} />
-            <View style={styles.inputWrapper}>
-              <Ionicons name="location-outline" size={20} color={Colors.light.primary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="City (e.g. Toronto, Scarborough)"
-                placeholderTextColor="#9CA3AF"
-                value={location}
-                onChangeText={setLocation}
-                returnKeyType="search"
-                onSubmitEditing={handleSearch}
-              />
-            </View>
-            <TouchableOpacity style={styles.searchButton} onPress={handleSearch} activeOpacity={0.8}>
-              <Ionicons name="search" size={18} color="#fff" />
+            
+            <TouchableOpacity 
+              style={styles.inputWrapper} 
+              onPress={() => setIsLocModalVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="location-outline" size={20} color={Colors.light.secondary} style={styles.inputIcon} />
+              <View style={{ flex: 1, justifyContent: 'center' }}>
+                <Text 
+                  style={[
+                    styles.input, 
+                    !location && { color: Colors.light.textSecondary, fontSize: 14 }
+                  ]}
+                >
+                  {location || 'Select City or Province (e.g. Toronto)'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-down-outline" size={18} color={Colors.light.textSecondary} style={{ marginRight: Spacing.one }} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
               <Text style={styles.searchButtonText}>Search Directory</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Quick Stats */}
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNum}>500+</Text>
-              <Text style={styles.statLabel}>Businesses</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNum}>12</Text>
-              <Text style={styles.statLabel}>Provinces</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNum}>50k+</Text>
-              <Text style={styles.statLabel}>Community</Text>
-            </View>
-          </View>
         </View>
 
-        {/* Categories */}
+        {/* Categories Section */}
         <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Browse Categories</Text>
-            <TouchableOpacity onPress={() => router.push('/directory')}>
-              <Text style={styles.seeAllText}>See All</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.sectionTitle}>Browse Categories</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll}>
-            {categories.map((cat) => (
+            {categories.map((category) => (
               <TouchableOpacity
-                key={cat.id}
+                key={category.id}
                 style={styles.categoryItem}
-                onPress={() => router.push({ pathname: '/directory', params: { category: cat.name } })}
-                activeOpacity={0.7}
+                onPress={() => router.push({ pathname: '/directory', params: { category: category.name } })}
               >
                 <View style={styles.categoryIconBg}>
-                  <Ionicons name={cat.icon as any} size={22} color={Colors.light.primary} />
+                  <Ionicons name={category.icon as any} size={24} color={Colors.light.primary} />
                 </View>
-                <Text style={styles.categoryName} numberOfLines={1}>{cat.name}</Text>
-                <Text style={styles.categoryCount}>{cat.count}</Text>
+                <Text style={styles.categoryName}>{category.name}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
 
-        {/* Featured Businesses */}
+        {/* Featured Section */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Featured Listings</Text>
+            <Text style={styles.sectionTitle}>Featured Businesses</Text>
             <TouchableOpacity onPress={() => router.push('/directory')}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.sectionSubtitle}>முக்கிய நிறுவனங்கள்</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
             {featuredBusinesses.map((item) => (
               <TouchableOpacity
                 key={item.id}
                 style={styles.featuredCard}
                 onPress={() => router.push({ pathname: '/directory', params: { id: item.id } })}
-                activeOpacity={0.9}
               >
                 <Image source={{ uri: item.image }} style={styles.cardImage} />
-                <View style={styles.cardBadge}>
-                  <Text style={styles.cardBadgeText}>{item.category}</Text>
-                </View>
                 <View style={styles.cardContent}>
-                  <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>
-                  <View style={styles.cardRow}>
-                    <Ionicons name="location-outline" size={12} color={Colors.light.textSecondary} />
+                  <Text style={styles.cardTag}>{item.category}</Text>
+                  <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
+                  <View style={styles.cardLocationRow}>
+                    <Ionicons name="location-outline" size={14} color={Colors.light.textSecondary} />
                     <Text style={styles.cardLocationText}>{item.location}</Text>
                   </View>
                   <View style={styles.cardRatingRow}>
-                    {[1,2,3,4,5].map(i => (
-                      <Ionicons key={i} name={i <= Math.floor(item.rating) ? "star" : "star-outline"} size={12} color="#F59E0B" />
-                    ))}
-                    <Text style={styles.cardRatingText}>{item.rating} ({item.reviews})</Text>
+                    <Ionicons name="star" size={14} color="#FFCC00" />
+                    <Text style={styles.cardRatingText}>{item.rating} ({item.reviews} reviews)</Text>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -182,113 +157,100 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-        {/* Upcoming Events Banner */}
-        <TouchableOpacity
-          style={styles.eventsBanner}
-          onPress={() => router.push('/events')}
-          activeOpacity={0.9}
-        >
-          <View style={styles.eventsBannerContent}>
-            <View style={styles.eventsBannerIcon}>
-              <Ionicons name="calendar" size={28} color="#fff" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.eventsBannerTitle}>Upcoming Events</Text>
-              <Text style={styles.eventsBannerSub}>{events.length} events this season</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.8)" />
-          </View>
-        </TouchableOpacity>
-
-        {/* Latest Articles */}
+        {/* Obituaries / RIP Book Snippet */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Popular Articles</Text>
-            <TouchableOpacity onPress={() => router.push('/articles')}>
+            <Text style={styles.sectionTitle}>Latest Obituaries</Text>
+            <TouchableOpacity onPress={() => router.push('/rip-book')}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.sectionSubtitle}>பிரபலமான கட்டுரைகள்</Text>
-          {latestArticles.map((article) => (
+          {latestObituaries.map((obituary) => (
             <TouchableOpacity
-              key={article.id}
-              style={styles.articleRow}
-              onPress={() => router.push({ pathname: '/articles', params: { id: article.id } })}
-              activeOpacity={0.85}
-            >
-              <Image source={{ uri: article.image }} style={styles.articleImage} />
-              <View style={styles.articleContent}>
-                <Text style={styles.articleCategory}>{article.category}</Text>
-                <Text style={styles.articleTitle} numberOfLines={2}>{article.title}</Text>
-                <View style={styles.articleMeta}>
-                  <Ionicons name="time-outline" size={11} color={Colors.light.textSecondary} />
-                  <Text style={styles.articleMetaText}>{article.readTime}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Obituaries / RIP Book */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.ripBookHeader}>
-              <Ionicons name="flame" size={18} color={Colors.light.primary} />
-              <Text style={styles.sectionTitle}> Recent Obituaries</Text>
-            </View>
-            <TouchableOpacity onPress={() => router.push('/rip-book')}>
-              <Text style={styles.seeAllText}>RIP Book</Text>
-            </TouchableOpacity>
-          </View>
-          {latestObituaries.map((obit) => (
-            <TouchableOpacity
-              key={obit.id}
+              key={obituary.id}
               style={styles.obituaryRow}
-              onPress={() => router.push('/rip-book')}
-              activeOpacity={0.85}
+              onPress={() => router.push({ pathname: '/rip-book', params: { id: obituary.id } })}
             >
-              <Image source={{ uri: obit.image }} style={styles.obituaryImage} />
+              <Image source={{ uri: obituary.image }} style={styles.obituaryImage} />
               <View style={styles.obituaryInfo}>
-                <Text style={styles.obituaryName}>{obit.name}</Text>
-                <Text style={styles.obituaryMeta}>Age: {obit.age} | Passed: {obit.date}</Text>
-                <Text style={styles.obituaryHometown}>{obit.hometown}</Text>
-                <View style={styles.candleRow}>
-                  <Ionicons name="flame" size={13} color={Colors.light.primary} />
-                  <Text style={styles.candleText}>{obit.candles} candles lit</Text>
-                </View>
+                <Text style={styles.obituaryName}>{obituary.name}</Text>
+                <Text style={styles.obituaryMeta}>Age: {obituary.age} | Passed: {obituary.date}</Text>
+                <Text style={styles.obituaryHometown}>Hometown: {obituary.hometown}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={Colors.light.textSecondary} />
+              <Ionicons name="chevron-forward-outline" size={20} color={Colors.light.textSecondary} />
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Advertise Banner */}
-        <View style={styles.advertiseContainer}>
-          <View style={styles.advertiseCard}>
-            <View style={styles.advertiseLeft}>
-              <Text style={styles.advertiseTitle}>Advertise with Akaram</Text>
-              <Text style={styles.advertiseDesc}>உங்கள் வணிகத்தை இணைக்க{'\n'}Promote your business to the Tamil Canadian community.</Text>
-              <View style={styles.advertiseButtons}>
-                <TouchableOpacity
-                  style={styles.advertiseBtn}
-                  onPress={() => router.push('/pricing')}
-                >
-                  <Text style={styles.advertiseBtnText}>List Business</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.advertiseBtn, styles.advertiseBtnOutline]}
-                  onPress={() => router.push('/rip-book')}
-                >
-                  <Text style={[styles.advertiseBtnText, styles.advertiseBtnOutlineText]}>Publish Obituary</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
+        {/* Info Banner */}
+        <View style={styles.bannerContainer}>
+          <LinearGradient
+            colors={[Colors.light.primary, Colors.light.secondary]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.banner}
+          >
+            <Text style={styles.bannerTitle}>Advertise with Akaram</Text>
+            <Text style={styles.bannerDescription}>Promote your business to the Tamil Canadian community — the one place to connect culture, community, and business.</Text>
+            <TouchableOpacity style={styles.bannerButton} onPress={() => router.push('/more')}>
+              <Text style={styles.bannerButtonText}>Learn More</Text>
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
-
         <View style={{ height: 100 }} />
       </ScrollView>
-    </View>
+
+      {/* Location Picker Modal */}
+      <Modal
+        visible={isLocModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsLocModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.locationModalContent}>
+            <View style={styles.locationModalHeader}>
+              <Text style={styles.locationModalTitle}>Select Location</Text>
+              <TouchableOpacity onPress={() => setIsLocModalVisible(false)}>
+                <Ionicons name="close" size={24} color={Colors.light.text} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={['All Locations', ...locations.filter(loc => loc !== 'All Locations')]}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.locationModalItem,
+                    (location === item || (item === 'All Locations' && !location)) && styles.activeLocationItem
+                  ]}
+                  onPress={() => handleSelectLocation(item)}
+                >
+                  <Ionicons 
+                    name={item === 'All Locations' ? 'globe-outline' : 'location-outline'} 
+                    size={20} 
+                    color={(location === item || (item === 'All Locations' && !location)) ? Colors.light.primary : Colors.light.textSecondary} 
+                    style={{ marginRight: Spacing.three }}
+                  />
+                  <Text 
+                    style={[
+                      styles.locationModalItemText,
+                      (location === item || (item === 'All Locations' && !location)) && styles.activeLocationItemText
+                    ]}
+                  >
+                    {item}
+                  </Text>
+                  {(location === item || (item === 'All Locations' && !location)) && (
+                    <Ionicons name="checkmark" size={20} color={Colors.light.primary} style={{ marginLeft: 'auto' }} />
+                  )}
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={{ paddingVertical: Spacing.two }}
+            />
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
@@ -297,270 +259,322 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.light.background,
   },
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
-    paddingVertical: 14,
-    backgroundColor: '#fff',
+    paddingVertical: Spacing.three,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.border,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
   },
-  logoRow: {},
-  logoContainer: { flexDirection: 'row', alignItems: 'center' },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   logoText: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
     color: Colors.light.primary,
-    letterSpacing: -0.5,
+    fontFamily: 'Plus Jakarta Sans',
+    letterSpacing: 0.5,
   },
-  logoDot: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#1A1A2E',
-    letterSpacing: -0.5,
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  logoTagline: {
-    fontSize: 10,
-    color: Colors.light.textSecondary,
-    marginTop: 1,
-    fontWeight: '500',
+  iconButton: {
+    marginLeft: Spacing.three,
+    padding: Spacing.one,
   },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  iconButton: { padding: 8, borderRadius: 20 },
   heroSection: {
-    backgroundColor: Colors.light.primary,
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.five,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
+    paddingVertical: Spacing.five,
+    backgroundColor: Colors.light.primary,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  heroContent: { marginBottom: Spacing.three },
   heroTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#fff',
+    color: '#ffffff',
+    fontFamily: 'Plus Jakarta Sans',
+    textAlign: 'center',
     lineHeight: 34,
-    marginBottom: 8,
+    marginBottom: Spacing.two,
   },
   heroSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.85)',
-    lineHeight: 19,
+    fontSize: 14,
+    color: '#ffdbcf',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: Spacing.four,
   },
   searchCard: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.two,
-    paddingBottom: 14,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: Spacing.three,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
-    marginBottom: Spacing.three,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: Spacing.two,
   },
-  inputIcon: { marginRight: 10 },
+  inputIcon: {
+    marginRight: Spacing.two,
+  },
   input: {
     flex: 1,
     fontSize: 14,
     color: Colors.light.text,
+    fontFamily: 'Plus Jakarta Sans',
+    padding: 0,
   },
   divider: {
     height: 1,
     backgroundColor: Colors.light.border,
-    marginVertical: 2,
+    marginVertical: Spacing.one,
   },
   searchButton: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: Colors.light.secondary,
     borderRadius: 12,
-    paddingVertical: 13,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    paddingVertical: Spacing.three,
     alignItems: 'center',
-    gap: 8,
-    marginTop: 10,
+    marginTop: Spacing.three,
   },
-  searchButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  statsRow: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 14,
-    paddingVertical: 12,
+  searchButtonText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 15,
   },
-  statItem: { flex: 1, alignItems: 'center' },
-  statNum: { fontSize: 18, fontWeight: '800', color: '#fff' },
-  statLabel: { fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
-  statDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.3)' },
-  sectionContainer: { paddingHorizontal: Spacing.four, paddingTop: Spacing.four },
+  sectionContainer: {
+    paddingVertical: Spacing.four,
+    paddingHorizontal: Spacing.four,
+  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
-  },
-  ripBookHeader: { flexDirection: 'row', alignItems: 'center' },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: Colors.light.text },
-  sectionSubtitle: { fontSize: 12, color: Colors.light.textSecondary, marginBottom: Spacing.three, fontStyle: 'italic' },
-  seeAllText: { color: Colors.light.primary, fontWeight: '600', fontSize: 13 },
-  categoriesScroll: { paddingRight: Spacing.four, paddingBottom: 8 },
-  categoryItem: { alignItems: 'center', marginRight: 18, width: 72 },
-  categoryIconBg: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: '#FEF2F2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#FECACA',
-  },
-  categoryName: { fontSize: 11, fontWeight: '600', color: Colors.light.text, textAlign: 'center' },
-  categoryCount: { fontSize: 10, color: Colors.light.primary, fontWeight: '700' },
-  featuredScroll: { paddingRight: Spacing.four, paddingBottom: 8 },
-  featuredCard: {
-    width: width * 0.62,
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    marginRight: Spacing.three,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-    overflow: 'hidden',
-  },
-  cardImage: { width: '100%', height: 130, backgroundColor: '#f3f4f6' },
-  cardBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    backgroundColor: Colors.light.primary,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  cardBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-  cardContent: { padding: 12 },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: Colors.light.text, marginBottom: 5, lineHeight: 19 },
-  cardRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5, gap: 3 },
-  cardLocationText: { fontSize: 11, color: Colors.light.textSecondary },
-  cardRatingRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  cardRatingText: { fontSize: 11, color: Colors.light.text, fontWeight: '600', marginLeft: 4 },
-  eventsBanner: {
-    marginHorizontal: Spacing.four,
-    marginTop: Spacing.four,
-    backgroundColor: Colors.light.secondary,
-    borderRadius: 18,
-    overflow: 'hidden',
-  },
-  eventsBannerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.four,
-    gap: Spacing.three,
-  },
-  eventsBannerIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  eventsBannerTitle: { fontSize: 17, fontWeight: '800', color: '#fff', marginBottom: 3 },
-  eventsBannerSub: { fontSize: 12, color: 'rgba(255,255,255,0.8)' },
-  articleRow: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 14,
     marginBottom: Spacing.three,
-    overflow: 'hidden',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.light.text,
+    fontFamily: 'Plus Jakarta Sans',
+  },
+  seeAllText: {
+    color: Colors.light.primary,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  categoriesScroll: {
+    paddingRight: Spacing.four,
+  },
+  categoryItem: {
+    alignItems: 'center',
+    marginRight: Spacing.four,
+    width: 80,
+  },
+  categoryIconBg: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#ffdbcf',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.two,
+  },
+  categoryName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.light.text,
+    textAlign: 'center',
+  },
+  featuredScroll: {
+    paddingRight: Spacing.four,
+  },
+  featuredCard: {
+    width: width * 0.65,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    marginRight: Spacing.four,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
     borderWidth: 1,
     borderColor: Colors.light.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    overflow: 'hidden',
   },
-  articleImage: { width: 90, height: 90, backgroundColor: '#f3f4f6' },
-  articleContent: { flex: 1, padding: 12, justifyContent: 'center' },
-  articleCategory: {
+  cardImage: {
+    width: '100%',
+    height: 120,
+    backgroundColor: '#eee',
+  },
+  cardContent: {
+    padding: Spacing.three,
+  },
+  cardTag: {
     fontSize: 10,
     fontWeight: '700',
     color: Colors.light.primary,
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: Spacing.one,
   },
-  articleTitle: { fontSize: 13, fontWeight: '700', color: Colors.light.text, lineHeight: 18 },
-  articleMeta: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 6 },
-  articleMetaText: { fontSize: 11, color: Colors.light.textSecondary },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.light.text,
+    marginBottom: Spacing.two,
+  },
+  cardLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.one,
+  },
+  cardLocationText: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    marginLeft: 4,
+  },
+  cardRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cardRatingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.light.text,
+    marginLeft: 4,
+  },
   obituaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 14,
+    padding: Spacing.three,
     marginBottom: Spacing.three,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.02,
     shadowRadius: 4,
     elevation: 1,
-  },
-  obituaryImage: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    marginRight: Spacing.three,
-    backgroundColor: '#f3f4f6',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: Colors.light.border,
   },
-  obituaryInfo: { flex: 1 },
-  obituaryName: { fontSize: 14, fontWeight: '700', color: Colors.light.text, marginBottom: 3 },
-  obituaryMeta: { fontSize: 11, color: Colors.light.textSecondary, marginBottom: 2 },
-  obituaryHometown: { fontSize: 11, color: Colors.light.secondary, fontWeight: '600', marginBottom: 4 },
-  candleRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  candleText: { fontSize: 11, color: Colors.light.primary, fontWeight: '600' },
-  advertiseContainer: { paddingHorizontal: Spacing.four, paddingTop: Spacing.four },
-  advertiseCard: {
-    backgroundColor: Colors.light.primary,
-    borderRadius: 22,
-    padding: Spacing.four,
-    overflow: 'hidden',
+  obituaryImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: Spacing.three,
+    backgroundColor: '#eee',
   },
-  advertiseLeft: {},
-  advertiseTitle: { fontSize: 20, fontWeight: '800', color: '#fff', marginBottom: 6 },
-  advertiseDesc: { fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 19, marginBottom: Spacing.three },
-  advertiseButtons: { flexDirection: 'row', gap: Spacing.two },
-  advertiseBtn: {
-    backgroundColor: '#fff',
+  obituaryInfo: {
+    flex: 1,
+  },
+  obituaryName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.light.text,
+    marginBottom: 4,
+  },
+  obituaryMeta: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    marginBottom: 2,
+  },
+  obituaryHometown: {
+    fontSize: 12,
+    color: Colors.light.secondary,
+    fontWeight: '500',
+  },
+  bannerContainer: {
+    paddingHorizontal: Spacing.four,
+    paddingBottom: Spacing.four,
+  },
+  banner: {
+    borderRadius: 20,
+    padding: Spacing.five,
+    alignItems: 'center',
+  },
+  bannerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: Spacing.two,
+  },
+  bannerDescription: {
+    fontSize: 13,
+    color: '#ffdbcf',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: Spacing.four,
+  },
+  bannerButton: {
+    backgroundColor: '#ffffff',
     borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.five,
   },
-  advertiseBtnText: { color: Colors.light.primary, fontWeight: '700', fontSize: 13 },
-  advertiseBtnOutline: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#fff' },
-  advertiseBtnOutlineText: { color: '#fff' },
+  bannerButtonText: {
+    color: Colors.light.primary,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  locationModalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '75%',
+    paddingBottom: Spacing.four,
+  },
+  locationModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: Spacing.four,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+  },
+  locationModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.light.text,
+  },
+  locationModalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f7f9ff',
+  },
+  activeLocationItem: {
+    backgroundColor: Colors.light.primaryContainer,
+  },
+  locationModalItemText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: Colors.light.text,
+  },
+  activeLocationItemText: {
+    color: Colors.light.primary,
+    fontWeight: '700',
+  },
 });

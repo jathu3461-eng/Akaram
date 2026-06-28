@@ -1,7 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, SafeAreaView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors, Spacing } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,32 +7,25 @@ import { articles } from '@/data/mock-data';
 
 export default function NewsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+
+  // For demonstration, use articles as news items
+  const newsItems = articles;
 
   return (
-    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={22} color={Colors.light.text} />
+          <Ionicons name="arrow-back" size={24} color={Colors.light.text} />
         </TouchableOpacity>
-        <View>
-          <Text style={styles.headerTitle}>News Updates</Text>
-          <Text style={styles.headerSub}>Tamil Canadian News</Text>
-        </View>
-        <View style={{ width: 34 }} />
+        <Text style={styles.headerTitle}>News Updates</Text>
       </View>
 
       <FlatList
-        data={articles}
+        data={newsItems}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.newsCard}
-            onPress={() => router.push({ pathname: '/articles', params: { id: item.id } })}
-            activeOpacity={0.85}
-          >
+          <TouchableOpacity style={styles.newsCard}>
             <Image source={{ uri: item.image }} style={styles.newsImage} />
             <View style={styles.newsContent}>
               <View style={styles.newsMeta}>
@@ -43,18 +34,11 @@ export default function NewsScreen() {
               </View>
               <Text style={styles.newsTitle}>{item.title}</Text>
               <Text style={styles.newsExcerpt} numberOfLines={2}>{item.excerpt}</Text>
-              <View style={styles.newsFooter}>
-                <Text style={styles.newsAuthor}>By {item.author}</Text>
-                <View style={styles.readTimeRow}>
-                  <Ionicons name="time-outline" size={12} color={Colors.light.textSecondary} />
-                  <Text style={styles.readTime}>{item.readTime}</Text>
-                </View>
-              </View>
             </View>
           </TouchableOpacity>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -62,51 +46,67 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.light.background,
+    paddingTop: Platform.OS === 'android' ? 40 : 0,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     padding: Spacing.four,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.border,
+    borderBottomColor: '#ebeef3',
   },
-  backButton: { padding: 4 },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: Colors.light.text, textAlign: 'center' },
-  headerSub: { fontSize: 12, color: Colors.light.textSecondary, textAlign: 'center' },
-  listContainer: { padding: Spacing.three },
+  backButton: {
+    marginRight: Spacing.three,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.light.text,
+  },
+  listContainer: {
+    padding: Spacing.four,
+  },
   newsCard: {
     backgroundColor: '#fff',
-    borderRadius: 18,
-    marginBottom: 14,
+    borderRadius: 16,
+    marginBottom: Spacing.four,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.light.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
+    borderColor: '#ebeef3',
   },
-  newsImage: { width: '100%', height: 180, backgroundColor: '#f3f4f6' },
-  newsContent: { padding: Spacing.three },
-  newsMeta: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  newsImage: {
+    width: '100%',
+    height: 180,
+  },
+  newsContent: {
+    padding: Spacing.four,
+  },
+  newsMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.two,
+  },
   newsCategory: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '600',
     color: Colors.light.primary,
     textTransform: 'uppercase',
-    backgroundColor: '#FEF2F2',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
   },
-  newsDate: { fontSize: 11, color: Colors.light.textSecondary },
-  newsTitle: { fontSize: 16, fontWeight: '700', color: Colors.light.text, marginBottom: 6, lineHeight: 22 },
-  newsExcerpt: { fontSize: 13, color: Colors.light.textSecondary, lineHeight: 19, marginBottom: 10 },
-  newsFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  newsAuthor: { fontSize: 12, color: Colors.light.textSecondary, fontWeight: '500' },
-  readTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  readTime: { fontSize: 12, color: Colors.light.textSecondary },
+  newsDate: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+  },
+  newsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.light.text,
+    marginBottom: Spacing.two,
+    lineHeight: 22,
+  },
+  newsExcerpt: {
+    fontSize: 14,
+    color: Colors.light.textSecondary,
+    lineHeight: 20,
+  },
 });

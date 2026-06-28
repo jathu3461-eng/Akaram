@@ -8,300 +8,352 @@ import {
   ScrollView,
   Modal,
   TextInput,
+  Image,
   Alert,
-  Linking,
+  FlatList,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing } from '@/constants/theme';
+import { articles, events } from '@/data/mock-data';
 import { useAppStore } from '@/store/app-store';
 
 export default function MoreScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { state, login, logout } = useAppStore();
   const { isAuthenticated: isLoggedIn, user } = state;
+  const username = user?.name || '';
+  const email = user?.email || '';
 
-  const [activeModal, setActiveModal] = useState<'contact' | 'auth' | 'profile' | null>(null);
+  // Navigation Modals
+  const [activeModal, setActiveModal] = useState<'articles' | 'events' | 'contact' | 'auth' | 'profile' | null>(null);
+  
+  // Active details
+  const [selectedArticle, setSelectedArticle] = useState<typeof articles[0] | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<typeof events[0] | null>(null);
 
-  // Auth form
+  // Auth form state
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authUsername, setAuthUsername] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
 
-  // Contact form
+  // Contact Form State
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactMsg, setContactMsg] = useState('');
 
   const handleLogin = () => {
-    if (!authEmail.trim() || !authPassword.trim()) {
+    if (!authEmail || !authPassword) {
       Alert.alert('Error', 'Please enter your email and password.');
       return;
     }
     const name = authEmail.split('@')[0];
-    login({ id: Date.now().toString(), name, email: authEmail, phone: '' });
+    login({
+      id: Math.random().toString(),
+      name,
+      email: authEmail,
+      phone: '',
+    });
     setActiveModal('profile');
-    setAuthEmail(''); setAuthPassword('');
+    Alert.alert('Welcome', `Successfully logged in as ${name}!`);
   };
 
   const handleRegister = () => {
-    if (!authUsername.trim() || !authEmail.trim() || !authPassword.trim()) {
+    if (!authUsername || !authEmail || !authPassword) {
       Alert.alert('Error', 'Please fill in all fields.');
       return;
     }
-    login({ id: Date.now().toString(), name: authUsername, email: authEmail, phone: '' });
+    login({
+      id: Math.random().toString(),
+      name: authUsername,
+      email: authEmail,
+      phone: '',
+    });
     setActiveModal('profile');
-    setAuthUsername(''); setAuthEmail(''); setAuthPassword('');
-    Alert.alert('Welcome!', 'Your account has been created successfully.');
+    Alert.alert('Registered', 'Your account has been created successfully!');
   };
 
   const handleContactSubmit = () => {
-    if (!contactName.trim() || !contactEmail.trim() || !contactMsg.trim()) {
+    if (!contactName || !contactEmail || !contactMsg) {
       Alert.alert('Error', 'Please fill in all form fields.');
       return;
     }
-    setContactName(''); setContactEmail(''); setContactMsg('');
+    setContactName('');
+    setContactEmail('');
+    setContactMsg('');
     setActiveModal(null);
-    Alert.alert('Sent!', 'Your message has been sent. We will get back to you shortly.');
+    Alert.alert('Thank You', 'Your message has been sent. We will get back to you shortly.');
   };
 
-  const menuItems = [
-    {
-      icon: 'newspaper-outline',
-      iconBg: '#FEF3C7',
-      iconColor: '#D97706',
-      label: 'News & Updates',
-      desc: 'Latest Tamil Canadian news',
-      action: () => router.push('/news'),
-    },
-    {
-      icon: 'document-text-outline',
-      iconBg: '#EFF6FF',
-      iconColor: '#2563EB',
-      label: 'Articles',
-      desc: 'Tamil & English articles',
-      action: () => router.push('/articles'),
-    },
-    {
-      icon: 'calendar-outline',
-      iconBg: '#F0FDF4',
-      iconColor: '#16A34A',
-      label: 'Events Calendar',
-      desc: 'Community events',
-      action: () => router.push('/events'),
-    },
-    {
-      icon: 'map-outline',
-      iconBg: '#FDF4FF',
-      iconColor: '#9333EA',
-      label: 'Locations',
-      desc: 'Explore cities in Canada',
-      action: () => router.push('/locations'),
-    },
-    {
-      icon: 'pricetag-outline',
-      iconBg: '#FFF7ED',
-      iconColor: '#EA580C',
-      label: 'Pricing & Plans',
-      desc: 'Advertise with Akaram',
-      action: () => router.push('/pricing'),
-    },
-    {
-      icon: 'mail-outline',
-      iconBg: '#F0FDF4',
-      iconColor: Colors.light.success,
-      label: 'Contact Us',
-      desc: 'எங்களை தொடர்பு கொள்ள',
-      action: () => setActiveModal('contact'),
-    },
-  ];
-
   return (
-    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* User Card */}
         <View style={styles.userCard}>
           <View style={styles.avatar}>
-            {isLoggedIn ? (
-              <Text style={styles.avatarText}>{user?.name?.[0]?.toUpperCase()}</Text>
-            ) : (
-              <Ionicons name="person-outline" size={22} color={Colors.light.primary} />
-            )}
+            <Ionicons name="person-outline" size={24} color={Colors.light.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.userName}>
-              {isLoggedIn ? `Hello, ${user?.name}` : 'Welcome Guest'}
-            </Text>
-            <Text style={styles.userSub}>
-              {isLoggedIn ? user?.email : 'Sign in to access your listings & cart'}
-            </Text>
+            <Text style={styles.userName}>{isLoggedIn ? `Hello, ${username}` : 'Welcome Guest'}</Text>
+            <Text style={styles.userSub}>{isLoggedIn ? email : 'Sign in to access your listings & cart'}</Text>
           </View>
           <TouchableOpacity
             style={styles.authBtn}
             onPress={() => setActiveModal(isLoggedIn ? 'profile' : 'auth')}
           >
-            <Text style={styles.authBtnText}>{isLoggedIn ? 'Dashboard' : 'Login'}</Text>
+            <Text style={styles.authBtnText}>{isLoggedIn ? 'View Profile' : 'Login'}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Menu Grid */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Explore More</Text>
-        </View>
         <View style={styles.menuGrid}>
-          {menuItems.map((item, i) => (
-            <TouchableOpacity key={i} style={styles.gridItem} onPress={item.action} activeOpacity={0.8}>
-              <View style={[styles.gridIconBg, { backgroundColor: item.iconBg }]}>
-                <Ionicons name={item.icon as any} size={22} color={item.iconColor} />
-              </View>
-              <Text style={styles.gridLabel}>{item.label}</Text>
-              <Text style={styles.gridDesc}>{item.desc}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+          <TouchableOpacity style={styles.gridItem} onPress={() => router.push('/news')}>
+            <View style={[styles.gridIconBg, { backgroundColor: '#ffe5e5' }]}>
+              <Ionicons name="newspaper-outline" size={24} color={Colors.light.primary} />
+            </View>
+            <Text style={styles.gridLabel}>News</Text>
+            <Text style={styles.gridDesc}>Latest Updates</Text>
+          </TouchableOpacity>
 
-        {/* Support Links */}
-        <View style={styles.linkSection}>
-          <Text style={styles.sectionTitle}>Help & Support</Text>
-          {[
-            { label: 'About Akaram.ca', slug: 'about' },
-            { label: 'Privacy Policy', slug: 'privacy' },
-            { label: 'Terms of Service', slug: 'terms' },
-          ].map((item) => (
-            <TouchableOpacity
-              key={item.slug}
-              style={styles.linkRow}
-              onPress={() => router.push(`/p/${item.slug}` as any)}
-            >
-              <Text style={styles.linkText}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={16} color={Colors.light.textSecondary} />
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={styles.linkRow}
-            onPress={() => Linking.openURL('https://akaram.ca')}
-          >
-            <Text style={styles.linkText}>Visit akaram.ca website</Text>
-            <Ionicons name="open-outline" size={16} color={Colors.light.textSecondary} />
+          <TouchableOpacity style={styles.gridItem} onPress={() => setActiveModal('articles')}>
+            <View style={[styles.gridIconBg, { backgroundColor: '#ffdbcf' }]}>
+              <Ionicons name="document-text-outline" size={24} color={Colors.light.primary} />
+            </View>
+            <Text style={styles.gridLabel}>Articles</Text>
+            <Text style={styles.gridDesc}>Blogs & Guides</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.gridItem} onPress={() => router.push('/events')}>
+            <View style={[styles.gridIconBg, { backgroundColor: '#e5f3ff' }]}>
+              <Ionicons name="calendar-outline" size={24} color={Colors.light.link} />
+            </View>
+            <Text style={styles.gridLabel}>Events</Text>
+            <Text style={styles.gridDesc}>Community Calendar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.gridItem} onPress={() => router.push('/locations')}>
+            <View style={[styles.gridIconBg, { backgroundColor: '#e6e5ff' }]}>
+              <Ionicons name="map-outline" size={24} color="#6366f1" />
+            </View>
+            <Text style={styles.gridLabel}>Locations</Text>
+            <Text style={styles.gridDesc}>Explore Canada</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.gridItem} onPress={() => router.push('/pricing')}>
+            <View style={[styles.gridIconBg, { backgroundColor: '#fffbe6' }]}>
+              <Ionicons name="pricetag-outline" size={24} color="#f59e0b" />
+            </View>
+            <Text style={styles.gridLabel}>Pricing</Text>
+            <Text style={styles.gridDesc}>Post Ads & Books</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.gridItem} onPress={() => setActiveModal('contact')}>
+            <View style={[styles.gridIconBg, { backgroundColor: '#e6f4ea' }]}>
+              <Ionicons name="mail-outline" size={24} color={Colors.light.success} />
+            </View>
+            <Text style={styles.gridLabel}>Contact Us</Text>
+            <Text style={styles.gridDesc}>Get in touch</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Akaram.ca — Tamil Canadian Directory</Text>
-          <Text style={styles.footerSub}>© 2026 akaram.ca | Developed by Ceylon Tech</Text>
+        {/* Extra helpful links */}
+        <View style={styles.linkSection}>
+          <Text style={styles.sectionTitle}>Help & Support</Text>
+          <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/p/about' as any)}>
+            <Text style={styles.linkText}>About Us</Text>
+            <Ionicons name="chevron-forward" size={16} color={Colors.light.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/p/privacy' as any)}>
+            <Text style={styles.linkText}>Privacy Policy</Text>
+            <Ionicons name="chevron-forward" size={16} color={Colors.light.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/p/terms' as any)}>
+            <Text style={styles.linkText}>Terms of Service</Text>
+            <Ionicons name="chevron-forward" size={16} color={Colors.light.textSecondary} />
+          </TouchableOpacity>
         </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* CONTACT MODAL */}
-      <Modal visible={activeModal === 'contact'} animationType="slide" onRequestClose={() => setActiveModal(null)}>
+      {/* ARTICLES MODAL */}
+      <Modal visible={activeModal === 'articles'} animationType="slide">
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => { setSelectedArticle(null); setActiveModal(null); }} style={styles.closeButton}>
+              <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
+              <Text style={styles.closeButtonText}>Back</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Articles & News</Text>
+            <View style={{ width: 24 }} />
+          </View>
+
+          {selectedArticle ? (
+            <ScrollView style={{ padding: Spacing.four }} showsVerticalScrollIndicator={false}>
+              <TouchableOpacity onPress={() => setSelectedArticle(null)} style={styles.backLink}>
+                <Ionicons name="arrow-back" size={16} color={Colors.light.primary} />
+                <Text style={styles.backLinkText}>Back to all articles</Text>
+              </TouchableOpacity>
+              <Image source={{ uri: selectedArticle.image }} style={styles.articleDetailImage} />
+              <Text style={styles.articleDetailTitle}>{selectedArticle.title}</Text>
+              <Text style={styles.articleDetailMeta}>By {selectedArticle.author} | Published {selectedArticle.date}</Text>
+              <Text style={styles.articleDetailContent}>{selectedArticle.content}</Text>
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          ) : (
+            <FlatList
+              data={articles}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.articleCard} onPress={() => setSelectedArticle(item)}>
+                  <Image source={{ uri: item.image }} style={styles.articleImage} />
+                  <View style={styles.articleContent}>
+                    <Text style={styles.articleTitle} numberOfLines={2}>{item.title}</Text>
+                    <Text style={styles.articleMeta}>{item.date}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={{ padding: Spacing.four }}
+            />
+          )}
+        </SafeAreaView>
+      </Modal>
+
+      {/* EVENTS MODAL */}
+      <Modal visible={activeModal === 'events'} animationType="slide">
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => { setSelectedEvent(null); setActiveModal(null); }} style={styles.closeButton}>
+              <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
+              <Text style={styles.closeButtonText}>Back</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Events Calendar</Text>
+            <View style={{ width: 24 }} />
+          </View>
+
+          {selectedEvent ? (
+            <ScrollView style={{ padding: Spacing.four }} showsVerticalScrollIndicator={false}>
+              <TouchableOpacity onPress={() => setSelectedEvent(null)} style={styles.backLink}>
+                <Ionicons name="arrow-back" size={16} color={Colors.light.primary} />
+                <Text style={styles.backLinkText}>Back to all events</Text>
+              </TouchableOpacity>
+              <Image source={{ uri: selectedEvent.image }} style={styles.articleDetailImage} />
+              <Text style={styles.articleDetailTitle}>{selectedEvent.title}</Text>
+              
+              <View style={styles.eventInfoBox}>
+                <View style={styles.eventInfoRow}>
+                  <Ionicons name="calendar-outline" size={18} color={Colors.light.primary} />
+                  <Text style={styles.eventInfoVal}>{selectedEvent.date}</Text>
+                </View>
+                <View style={styles.eventInfoRow}>
+                  <Ionicons name="location-outline" size={18} color={Colors.light.primary} />
+                  <Text style={styles.eventInfoVal}>{selectedEvent.location}</Text>
+                </View>
+              </View>
+
+              <Text style={styles.articleDetailContent}>{selectedEvent.description}</Text>
+              
+              <TouchableOpacity 
+                style={styles.addCalendarBtn} 
+                onPress={() => Alert.alert('Calendar', 'Event added to your phone calendar successfully!')}
+              >
+                <Ionicons name="calendar-sharp" size={20} color="#ffffff" style={{ marginRight: 8 }} />
+                <Text style={styles.addCalendarBtnText}>Add to Calendar</Text>
+              </TouchableOpacity>
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          ) : (
+            <FlatList
+              data={events}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.eventCard} onPress={() => setSelectedEvent(item)}>
+                  <Image source={{ uri: item.image }} style={styles.eventImage} />
+                  <View style={styles.eventContent}>
+                    <Text style={styles.eventTitle}>{item.title}</Text>
+                    <Text style={styles.eventMeta}>{item.date}</Text>
+                    <Text style={styles.eventLoc} numberOfLines={1}>{item.location}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={{ padding: Spacing.four }}
+            />
+          )}
+        </SafeAreaView>
+      </Modal>
+
+      {/* CONTACT US MODAL */}
+      <Modal visible={activeModal === 'contact'} animationType="slide">
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setActiveModal(null)} style={styles.closeButton}>
-              <Ionicons name="chevron-back" size={22} color={Colors.light.text} />
+              <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
               <Text style={styles.closeButtonText}>Back</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Contact Us</Text>
-            <View style={{ width: 50 }} />
+            <View style={{ width: 24 }} />
           </View>
+
           <ScrollView style={{ padding: Spacing.four }}>
-            <Text style={styles.contactIntro}>
-              எங்களை தொடர்பு கொள்ள{'\n'}akaram.ca Tamil Canadian web directory தொடர்பான கேள்விகளுக்கு எங்களை நாடுங்கள்.
-            </Text>
-            {[
-              { label: 'Your Name *', val: contactName, set: setContactName, placeholder: 'Full Name', type: undefined },
-              { label: 'Email Address *', val: contactEmail, set: setContactEmail, placeholder: 'name@example.com', type: 'email-address' as const },
-            ].map((f) => (
-              <View key={f.label}>
-                <Text style={styles.formLabel}>{f.label}</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder={f.placeholder}
-                  keyboardType={f.type}
-                  value={f.val}
-                  onChangeText={f.set}
-                />
-              </View>
-            ))}
-            <Text style={styles.formLabel}>Message *</Text>
+            <Text style={styles.contactLabel}>Name *</Text>
+            <TextInput
+              style={styles.formInput}
+              placeholder="Your Full Name"
+              value={contactName}
+              onChangeText={setContactName}
+            />
+
+            <Text style={styles.contactLabel}>Email Address *</Text>
+            <TextInput
+              style={styles.formInput}
+              placeholder="e.g. jathu@example.com"
+              keyboardType="email-address"
+              value={contactEmail}
+              onChangeText={setContactEmail}
+            />
+
+            <Text style={styles.contactLabel}>Message *</Text>
             <TextInput
               style={[styles.formInput, { height: 120, textAlignVertical: 'top' }]}
-              multiline numberOfLines={5}
-              placeholder="How can we help you?"
+              multiline
+              numberOfLines={5}
+              placeholder="How can we help you? Write your message here..."
               value={contactMsg}
               onChangeText={setContactMsg}
             />
-            <TouchableOpacity style={styles.submitBtn} onPress={handleContactSubmit}>
-              <Text style={styles.submitBtnText}>Send Message</Text>
+
+            <TouchableOpacity style={styles.submitContactBtn} onPress={handleContactSubmit}>
+              <Text style={styles.submitContactBtnText}>Submit Message</Text>
             </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
       </Modal>
 
-      {/* AUTH MODAL */}
-      <Modal visible={activeModal === 'auth'} animationType="slide" onRequestClose={() => setActiveModal(null)}>
+      {/* AUTH (LOGIN/REGISTER) MODAL */}
+      <Modal visible={activeModal === 'auth'} animationType="slide">
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setActiveModal(null)} style={styles.closeButton}>
-              <Ionicons name="close" size={22} color={Colors.light.text} />
+              <Ionicons name="close" size={24} color={Colors.light.text} />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Akaram Account</Text>
-            <View style={{ width: 30 }} />
+            <View style={{ width: 24 }} />
           </View>
-          <ScrollView style={{ padding: Spacing.four }}>
-            {/* Tabs */}
-            <View style={styles.authTabs}>
-              <TouchableOpacity
-                style={[styles.authTab, !isRegister && styles.authTabActive]}
-                onPress={() => setIsRegister(false)}
-              >
-                <Text style={[styles.authTabText, !isRegister && styles.authTabTextActive]}>Login</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.authTab, isRegister && styles.authTabActive]}
-                onPress={() => setIsRegister(true)}
-              >
-                <Text style={[styles.authTabText, isRegister && styles.authTabTextActive]}>Register</Text>
-              </TouchableOpacity>
-            </View>
 
-            <Text style={styles.authMainTitle}>
-              {isRegister ? 'Create Account' : 'Sign In'}
-            </Text>
-            <Text style={styles.authSubtitle}>
-              {isRegister
-                ? 'Join the Tamil Canadian community directory.'
-                : 'Access your listings, saved businesses, and more.'}
-            </Text>
-
-            {isRegister && (
-              <>
-                <Text style={styles.formLabel}>Username</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="Your name"
-                  value={authUsername}
-                  onChangeText={setAuthUsername}
-                />
-              </>
-            )}
-            <Text style={styles.formLabel}>Email Address</Text>
+          <ScrollView style={{ padding: Spacing.five }}>
+            <Text style={styles.authMainTitle}>Sign In</Text>
+            <Text style={styles.authSubtitle}>Connect to search, post ads, and interact with the directory.</Text>
+            
+            <Text style={styles.contactLabel}>Email Address</Text>
             <TextInput
               style={styles.formInput}
-              placeholder="name@example.com"
+              placeholder="name@domain.com"
               keyboardType="email-address"
-              autoCapitalize="none"
               value={authEmail}
               onChangeText={setAuthEmail}
             />
-            <Text style={styles.formLabel}>Password</Text>
+
+            <Text style={styles.contactLabel}>Password</Text>
             <TextInput
               style={styles.formInput}
               placeholder="••••••••"
@@ -309,61 +361,62 @@ export default function MoreScreen() {
               value={authPassword}
               onChangeText={setAuthPassword}
             />
-            <TouchableOpacity
-              style={styles.submitBtn}
-              onPress={isRegister ? handleRegister : handleLogin}
-            >
-              <Text style={styles.submitBtnText}>{isRegister ? 'Create Account' : 'Log In'}</Text>
+
+            <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
+              <Text style={styles.loginBtnText}>Log In</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.switchAuthBtn}
-              onPress={() => setIsRegister(!isRegister)}
-            >
-              <Text style={styles.switchAuthText}>
-                {isRegister ? 'Already have an account? Login' : "Don't have an account? Register"}
-              </Text>
+
+            <View style={styles.authDivider}>
+              <View style={styles.authDividerLine} />
+              <Text style={styles.authDividerText}>OR REGISTER</Text>
+              <View style={styles.authDividerLine} />
+            </View>
+
+            <Text style={styles.contactLabel}>User Name</Text>
+            <TextInput
+              style={styles.formInput}
+              placeholder="Username"
+              value={authUsername}
+              onChangeText={setAuthUsername}
+            />
+
+            <TouchableOpacity style={[styles.loginBtn, { backgroundColor: Colors.light.primary }]} onPress={handleRegister}>
+              <Text style={styles.loginBtnText}>Create Account</Text>
             </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
       </Modal>
 
-      {/* PROFILE MODAL */}
-      <Modal visible={activeModal === 'profile'} animationType="slide" onRequestClose={() => setActiveModal(null)}>
+      {/* PROFILE DASHBOARD MODAL */}
+      <Modal visible={activeModal === 'profile'} animationType="slide">
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setActiveModal(null)} style={styles.closeButton}>
-              <Ionicons name="close" size={22} color={Colors.light.text} />
+              <Ionicons name="close" size={24} color={Colors.light.text} />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>My Dashboard</Text>
-            <View style={{ width: 30 }} />
+            <Text style={styles.modalTitle}>User Dashboard</Text>
+            <View style={{ width: 24 }} />
           </View>
+
           <ScrollView style={{ padding: Spacing.four }}>
             <View style={styles.profileBox}>
               <View style={styles.profileAvatar}>
-                <Text style={styles.profileAvatarText}>{user?.name?.[0]?.toUpperCase() ?? 'U'}</Text>
+                <Text style={styles.profileAvatarText}>{username ? username[0].toUpperCase() : 'U'}</Text>
               </View>
-              <Text style={styles.profileName}>{user?.name}</Text>
-              <Text style={styles.profileEmail}>{user?.email}</Text>
+              <Text style={styles.profileName}>{username}</Text>
+              <Text style={styles.profileEmail}>{email}</Text>
             </View>
 
             <Text style={styles.sectionTitle}>Your Activity</Text>
             <View style={styles.activityBox}>
               <View style={styles.activityRow}>
                 <Ionicons name="document-text-outline" size={20} color={Colors.light.primary} />
-                <Text style={styles.activityLabel}>My Classified Ads</Text>
-                <Text style={styles.activityCount}>0</Text>
+                <Text style={styles.activityLabel}>My Classified Ads (0)</Text>
               </View>
               <View style={styles.activityDivider} />
               <View style={styles.activityRow}>
                 <Ionicons name="bookmark-outline" size={20} color={Colors.light.secondary} />
-                <Text style={styles.activityLabel}>Saved Listings</Text>
-                <Text style={styles.activityCount}>{state.savedListings.length}</Text>
-              </View>
-              <View style={styles.activityDivider} />
-              <View style={styles.activityRow}>
-                <Ionicons name="bag-outline" size={20} color={Colors.light.success} />
-                <Text style={styles.activityLabel}>Cart Items</Text>
-                <Text style={styles.activityCount}>{state.cart.reduce((a, b) => a + b.quantity, 0)}</Text>
+                <Text style={styles.activityLabel}>Saved Directory Listings (0)</Text>
               </View>
             </View>
 
@@ -371,17 +424,19 @@ export default function MoreScreen() {
               style={styles.logoutBtn}
               onPress={() => {
                 logout();
+                setAuthUsername('');
+                setAuthEmail('');
+                setAuthPassword('');
                 setActiveModal(null);
-                Alert.alert('Logged Out', 'You have been logged out successfully.');
+                Alert.alert('Logged Out', 'You have been logged out.');
               }}
             >
-              <Ionicons name="log-out-outline" size={18} color={Colors.light.error} />
               <Text style={styles.logoutBtnText}>Log Out</Text>
             </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -393,64 +448,58 @@ const styles = StyleSheet.create({
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    margin: Spacing.three,
-    padding: Spacing.three,
-    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    margin: Spacing.four,
+    padding: Spacing.four,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.light.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#FEF2F2',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ffdbcf',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-    borderWidth: 1.5,
-    borderColor: '#FECACA',
+    marginRight: Spacing.three,
   },
-  avatarText: { fontSize: 20, fontWeight: '800', color: Colors.light.primary },
-  userName: { fontSize: 16, fontWeight: '700', color: Colors.light.text },
-  userSub: { fontSize: 12, color: Colors.light.textSecondary, marginTop: 2 },
+  userName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.light.text,
+  },
+  userSub: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    marginTop: 2,
+  },
   authBtn: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: Colors.light.secondary,
     borderRadius: 10,
-    paddingVertical: 9,
-    paddingHorizontal: 16,
-  },
-  authBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  sectionHeader: {
+    paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
-    paddingTop: 4,
-    paddingBottom: 10,
   },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: Colors.light.text },
+  authBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
   menuGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: Spacing.two,
+    paddingHorizontal: Spacing.three,
     justifyContent: 'space-between',
   },
   gridItem: {
-    backgroundColor: '#fff',
-    width: '48%',
-    borderRadius: 18,
-    padding: Spacing.three,
-    marginBottom: 10,
+    backgroundColor: '#ffffff',
+    width: '47%',
+    borderRadius: 16,
+    padding: Spacing.four,
+    marginBottom: Spacing.three,
     borderWidth: 1,
     borderColor: Colors.light.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    alignItems: 'center',
   },
   gridIconBg: {
     width: 48,
@@ -458,141 +507,341 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: Spacing.three,
   },
-  gridLabel: { fontSize: 14, fontWeight: '700', color: Colors.light.text },
-  gridDesc: { fontSize: 11, color: Colors.light.textSecondary, marginTop: 2 },
-  linkSection: { paddingHorizontal: Spacing.three, paddingTop: 10 },
+  gridLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.light.text,
+    textAlign: 'center',
+  },
+  gridDesc: {
+    fontSize: 11,
+    color: Colors.light.textSecondary,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  linkSection: {
+    paddingHorizontal: Spacing.four,
+    marginTop: Spacing.four,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.light.text,
+    marginBottom: Spacing.three,
+  },
   linkRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: Spacing.three,
+    marginBottom: Spacing.two,
     borderWidth: 1,
     borderColor: Colors.light.border,
   },
-  linkText: { fontSize: 14, fontWeight: '600', color: Colors.light.text },
-  footer: {
-    alignItems: 'center',
-    paddingVertical: Spacing.four,
-    paddingHorizontal: Spacing.four,
+  linkText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.light.text,
   },
-  footerText: { fontSize: 13, fontWeight: '600', color: Colors.light.text, textAlign: 'center' },
-  footerSub: { fontSize: 11, color: Colors.light.textSecondary, marginTop: 4, textAlign: 'center' },
-  modalContainer: { flex: 1, backgroundColor: Colors.light.background },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: Colors.light.background,
+  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
-    paddingVertical: 14,
-    backgroundColor: '#fff',
+    paddingVertical: Spacing.three,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.border,
   },
-  closeButton: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  closeButtonText: { fontSize: 15, fontWeight: '600', color: Colors.light.text },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.light.text },
-  contactIntro: {
-    fontSize: 13,
-    color: Colors.light.textSecondary,
-    lineHeight: 20,
-    marginBottom: 16,
-    backgroundColor: '#FEF2F2',
-    padding: 12,
-    borderRadius: 12,
+  closeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  formLabel: { fontSize: 13, fontWeight: '700', color: Colors.light.text, marginBottom: 5, marginTop: 12 },
-  formInput: {
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
+  closeButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.light.text,
+    marginLeft: 4,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
     color: Colors.light.text,
   },
-  submitBtn: {
-    backgroundColor: Colors.light.primary,
-    borderRadius: 14,
-    paddingVertical: 15,
+  backLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.three,
+  },
+  backLinkText: {
+    color: Colors.light.primary,
+    fontWeight: '600',
+    fontSize: 13,
+    marginLeft: 4,
+  },
+  articleCard: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    marginBottom: Spacing.three,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
+  articleImage: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#eee',
+  },
+  articleContent: {
+    flex: 1,
+    padding: Spacing.three,
+    justifyContent: 'center',
+  },
+  articleTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.light.text,
+  },
+  articleMeta: {
+    fontSize: 11,
+    color: Colors.light.textSecondary,
+    marginTop: 4,
+  },
+  articleDetailImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 16,
+    backgroundColor: '#eee',
+    marginBottom: Spacing.three,
+  },
+  articleDetailTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: Colors.light.text,
+    lineHeight: 26,
+    marginBottom: Spacing.one,
+  },
+  articleDetailMeta: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    marginBottom: Spacing.three,
+  },
+  articleDetailContent: {
+    fontSize: 14,
+    color: Colors.light.textSecondary,
+    lineHeight: 24,
+  },
+  eventCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    marginBottom: Spacing.three,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
+  eventImage: {
+    width: '100%',
+    height: 120,
+    backgroundColor: '#eee',
+  },
+  eventContent: {
+    padding: Spacing.three,
+  },
+  eventTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.light.text,
+  },
+  eventMeta: {
+    fontSize: 12,
+    color: Colors.light.primary,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  eventLoc: {
+    fontSize: 11,
+    color: Colors.light.textSecondary,
+    marginTop: 2,
+  },
+  eventInfoBox: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    marginBottom: Spacing.three,
+  },
+  eventInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.one,
+    gap: Spacing.two,
+  },
+  eventInfoVal: {
+    fontSize: 13,
+    color: Colors.light.text,
+    fontWeight: '500',
+  },
+  addCalendarBtn: {
+    backgroundColor: Colors.light.secondary,
+    borderRadius: 12,
+    paddingVertical: Spacing.three,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: Spacing.four,
   },
-  submitBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  authTabs: {
-    flexDirection: 'row',
-    backgroundColor: Colors.light.surfaceContainer,
-    borderRadius: 14,
-    padding: 4,
-    marginBottom: 20,
+  addCalendarBtnText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 14,
   },
-  authTab: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 11,
+  contactLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.light.text,
+    marginBottom: Spacing.one,
+    marginTop: Spacing.two,
+  },
+  formInput: {
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    fontSize: 14,
+    color: Colors.light.text,
+    marginBottom: Spacing.two,
+  },
+  submitContactBtn: {
+    backgroundColor: Colors.light.primary,
+    borderRadius: 12,
+    paddingVertical: Spacing.three,
     alignItems: 'center',
+    marginTop: Spacing.four,
   },
-  authTabActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
-  authTabText: { fontSize: 14, fontWeight: '600', color: Colors.light.textSecondary },
-  authTabTextActive: { color: Colors.light.primary, fontWeight: '700' },
-  authMainTitle: { fontSize: 24, fontWeight: '800', color: Colors.light.text, marginBottom: 6 },
-  authSubtitle: { fontSize: 13, color: Colors.light.textSecondary, lineHeight: 19, marginBottom: 16 },
-  switchAuthBtn: { alignItems: 'center', marginTop: 16, paddingVertical: 8 },
-  switchAuthText: { fontSize: 13, color: Colors.light.primary, fontWeight: '600' },
+  submitContactBtnText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  authMainTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: Colors.light.text,
+    textAlign: 'center',
+    marginBottom: Spacing.one,
+  },
+  authSubtitle: {
+    fontSize: 13,
+    color: Colors.light.textSecondary,
+    textAlign: 'center',
+    marginBottom: Spacing.five,
+  },
+  loginBtn: {
+    backgroundColor: Colors.light.secondary,
+    borderRadius: 12,
+    paddingVertical: Spacing.three,
+    alignItems: 'center',
+    marginTop: Spacing.three,
+  },
+  loginBtnText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  authDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.four,
+  },
+  authDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.light.border,
+  },
+  authDividerText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.light.textSecondary,
+    paddingHorizontal: Spacing.three,
+  },
   profileBox: {
     alignItems: 'center',
-    paddingVertical: 28,
-    backgroundColor: '#fff',
-    borderRadius: 20,
+    paddingVertical: Spacing.five,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.light.border,
-    marginBottom: 20,
+    marginBottom: Spacing.four,
   },
   profileAvatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#FEF2F2',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#ffdbcf',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
-    borderWidth: 2,
-    borderColor: '#FECACA',
+    marginBottom: Spacing.two,
   },
-  profileAvatarText: { fontSize: 28, fontWeight: '800', color: Colors.light.primary },
-  profileName: { fontSize: 20, fontWeight: '700', color: Colors.light.text },
-  profileEmail: { fontSize: 13, color: Colors.light.textSecondary, marginTop: 4 },
+  profileAvatarText: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: Colors.light.primary,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.light.text,
+  },
+  profileEmail: {
+    fontSize: 13,
+    color: Colors.light.textSecondary,
+    marginTop: 2,
+  },
   activityBox: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.light.border,
-    paddingHorizontal: 16,
-    marginBottom: 20,
+    paddingHorizontal: Spacing.three,
   },
   activityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    gap: 12,
+    paddingVertical: Spacing.three,
+    gap: Spacing.two,
   },
-  activityLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.light.text },
-  activityCount: { fontSize: 15, fontWeight: '800', color: Colors.light.primary },
-  activityDivider: { height: 1, backgroundColor: Colors.light.border },
+  activityLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.light.text,
+  },
+  activityDivider: {
+    height: 1,
+    backgroundColor: Colors.light.border,
+  },
   logoutBtn: {
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: Colors.light.error,
-    borderRadius: 14,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: Spacing.three,
     alignItems: 'center',
-    gap: 8,
+    marginTop: Spacing.five,
   },
-  logoutBtnText: { color: Colors.light.error, fontWeight: '700', fontSize: 15 },
+  logoutBtnText: {
+    color: Colors.light.error,
+    fontWeight: '700',
+    fontSize: 15,
+  },
 });

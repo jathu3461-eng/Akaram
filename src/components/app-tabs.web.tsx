@@ -6,45 +6,38 @@ import {
   TabTriggerSlotProps,
   TabListProps,
 } from 'expo-router/ui';
-import { SymbolView } from 'expo-symbols';
-import { Pressable, useColorScheme, View, StyleSheet } from 'react-native';
+import { Pressable, useColorScheme, View, StyleSheet, Text } from 'react-native';
 
-import { ExternalLink } from './external-link';
-import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
+import { ThemedText } from './themed-text';
 
-import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
+
+const TAB_ITEMS = [
+  { name: 'index', href: '/', label: 'Home', icon: '🏠' },
+  { name: 'directory', href: '/directory', label: 'Directory', icon: '🔍' },
+  { name: 'marketplace', href: '/marketplace', label: 'Market', icon: '🛍️' },
+  { name: 'rip-book', href: '/rip-book', label: 'RIP Book', icon: '🕯️' },
+  { name: 'more', href: '/more', label: 'More', icon: '⋯' },
+];
 
 export default function AppTabs() {
   return (
     <View style={styles.webContainer}>
       <View style={styles.phoneFrame}>
-        {/* Dynamic Island Notch */}
-        <View style={styles.dynamicIsland}>
-          <View style={styles.dynamicIslandCamera} />
-          <View style={styles.dynamicIslandSensor} />
-        </View>
+        {/* Dynamic Island */}
+        <View style={styles.dynamicIsland} />
 
         <View style={styles.phoneScreen}>
           <Tabs>
             <TabSlot style={{ flex: 1 }} />
             <TabList asChild>
               <CustomTabList>
-                <TabTrigger name="index" href="/" asChild>
-                  <TabButton>Home</TabButton>
-                </TabTrigger>
-                <TabTrigger name="directory" href="/directory" asChild>
-                  <TabButton>Directory</TabButton>
-                </TabTrigger>
-                <TabTrigger name="marketplace" href="/marketplace" asChild>
-                  <TabButton>Market</TabButton>
-                </TabTrigger>
-                <TabTrigger name="rip-book" href="/rip-book" asChild>
-                  <TabButton>RIP Book</TabButton>
-                </TabTrigger>
-                <TabTrigger name="more" href="/more" asChild>
-                  <TabButton>More</TabButton>
-                </TabTrigger>
+                {TAB_ITEMS.map((tab) => (
+                  <TabTrigger key={tab.name} name={tab.name} href={tab.href as any} asChild>
+                    <TabButton icon={tab.icon} label={tab.label} />
+                  </TabTrigger>
+                ))}
               </CustomTabList>
             </TabList>
           </Tabs>
@@ -54,29 +47,25 @@ export default function AppTabs() {
   );
 }
 
-export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
+type TabButtonProps = TabTriggerSlotProps & { icon: string; label: string };
+
+export function TabButton({ children, isFocused, icon, label, ...props }: TabButtonProps) {
   return (
-    <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView
-        type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
-        style={styles.tabButtonView}>
-        <ThemedText type="small" themeColor={isFocused ? 'primary' : 'textSecondary'} style={isFocused && styles.boldText}>
-          {children}
-        </ThemedText>
-      </ThemedView>
+    <Pressable {...props} style={({ pressed }) => [styles.tabBtn, pressed && styles.pressed]}>
+      <View style={[styles.tabBtnInner, isFocused && styles.tabBtnInnerActive]}>
+        <Text style={styles.tabIcon}>{icon}</Text>
+        <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]} numberOfLines={1}>
+          {label}
+        </Text>
+      </View>
     </Pressable>
   );
 }
 
 export function CustomTabList(props: TabListProps) {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
-
   return (
     <View {...props} style={styles.tabListContainer}>
-      <ThemedView type="backgroundElement" style={styles.innerContainer}>
-        {props.children}
-      </ThemedView>
+      <View style={styles.tabListInner}>{props.children}</View>
     </View>
   );
 }
@@ -84,56 +73,40 @@ export function CustomTabList(props: TabListProps) {
 const styles = StyleSheet.create({
   webContainer: {
     flex: 1,
-    backgroundColor: '#eef1f6',
+    backgroundColor: '#E8EDF3',
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
   },
   phoneFrame: {
-    width: 385,
-    height: 780,
-    borderRadius: 44,
-    borderWidth: 12,
-    borderColor: '#1e2022',
-    backgroundColor: '#1e2022',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.15,
-    shadowRadius: 30,
-    elevation: 10,
+    width: 390,
+    height: 790,
+    borderRadius: 50,
+    borderWidth: 14,
+    borderColor: '#1C1C1E',
+    backgroundColor: '#1C1C1E',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 24 },
+    shadowOpacity: 0.2,
+    shadowRadius: 40,
+    elevation: 15,
     overflow: 'hidden',
     position: 'relative',
   },
   dynamicIsland: {
-    width: 110,
-    height: 25,
-    borderRadius: 12.5,
-    backgroundColor: '#000000',
+    width: 120,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#000',
     position: 'absolute',
-    top: 10,
+    top: 12,
     alignSelf: 'center',
     zIndex: 9999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  dynamicIslandCamera: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#1a1a1a',
-  },
-  dynamicIslandSensor: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: '#0d0d0d',
   },
   phoneScreen: {
     flex: 1,
-    backgroundColor: '#f7f9ff',
-    borderRadius: 32,
+    backgroundColor: Colors.light.background,
+    borderRadius: 36,
     overflow: 'hidden',
   },
   tabListContainer: {
@@ -141,28 +114,34 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: Spacing.two,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderTopColor: '#ebeef3',
+    borderTopColor: Colors.light.border,
+    paddingBottom: 4,
   },
-  innerContainer: {
+  tabListInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.one,
+    justifyContent: 'space-around',
+    paddingTop: 8,
+    paddingHorizontal: 4,
   },
-  pressed: {
-    opacity: 0.7,
-  },
-  tabButtonView: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.two,
-    borderRadius: Spacing.three,
-    minWidth: 60,
+  tabBtn: {
+    flex: 1,
     alignItems: 'center',
   },
-  boldText: {
-    fontWeight: '700',
+  tabBtnInner: {
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    minWidth: 56,
   },
+  tabBtnInnerActive: {
+    backgroundColor: '#FEF2F2',
+  },
+  pressed: { opacity: 0.7 },
+  tabIcon: { fontSize: 20, marginBottom: 2 },
+  tabLabel: { fontSize: 10, fontWeight: '600', color: Colors.light.textSecondary },
+  tabLabelActive: { color: Colors.light.primary, fontWeight: '700' },
 });

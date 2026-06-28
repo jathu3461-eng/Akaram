@@ -63,47 +63,36 @@ export default function HomeScreen() {
 
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>Find Local Tamil Businesses in Canada</Text>
-          <Text style={styles.heroSubtitle}>Connecting culture, community, and business in one place.</Text>
+          <Text style={styles.heroTitle}>வணக்கம்</Text>
+          <Text style={styles.heroSubtitle}>Find Tamil businesses & services across Canada</Text>
+        </View>
 
-          {/* Search Inputs */}
-          <View style={styles.searchCard}>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="search-outline" size={20} color={Colors.light.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="What are you looking for?"
-                placeholderTextColor={Colors.light.textSecondary}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
-            <View style={styles.divider} />
-            
-            <TouchableOpacity 
-              style={styles.inputWrapper} 
-              onPress={() => setIsLocModalVisible(true)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="location-outline" size={20} color={Colors.light.secondary} style={styles.inputIcon} />
-              <View style={{ flex: 1, justifyContent: 'center' }}>
-                <Text 
-                  style={[
-                    styles.input, 
-                    !location && { color: Colors.light.textSecondary, fontSize: 14 }
-                  ]}
-                >
-                  {location || 'Select City or Province (e.g. Toronto)'}
-                </Text>
-              </View>
-              <Ionicons name="chevron-down-outline" size={18} color={Colors.light.textSecondary} style={{ marginRight: Spacing.one }} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-              <Text style={styles.searchButtonText}>Search Directory</Text>
-            </TouchableOpacity>
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Ionicons name="search-outline" size={18} color={Colors.light.textSecondary} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search businesses, services, temples..."
+              placeholderTextColor={Colors.light.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+            />
           </View>
         </View>
+
+        {/* Location Banner */}
+        <TouchableOpacity
+          style={styles.locationBanner}
+          onPress={() => router.push('/locations')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="location-outline" size={16} color="#ffffff" />
+          <Text style={styles.locationBannerText}>Browse by Province & City</Text>
+          <Ionicons name="arrow-forward-outline" size={16} color="#ffffff" />
+        </TouchableOpacity>
 
         {/* Categories Section */}
         <View style={styles.sectionContainer}>
@@ -292,69 +281,67 @@ const styles = StyleSheet.create({
     padding: Spacing.one,
   },
   heroSection: {
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.five,
-    backgroundColor: Colors.light.primary,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   heroTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#ffffff',
-    fontFamily: 'Plus Jakarta Sans',
-    textAlign: 'center',
-    lineHeight: 34,
-    marginBottom: Spacing.two,
+    fontSize: 36,
+    fontWeight: '700',
+    color: Colors.light.text,
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
-    fontSize: 14,
-    color: '#ffdbcf',
-    textAlign: 'center',
+    fontSize: 15,
+    color: Colors.light.textSecondary,
+    marginTop: 4,
     lineHeight: 20,
-    marginBottom: Spacing.four,
   },
-  searchCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: Spacing.three,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
-  inputWrapper: {
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.two,
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    height: 48,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    shadowColor: 'rgba(180, 120, 60, 0.12)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  inputIcon: {
-    marginRight: Spacing.two,
-  },
-  input: {
+  searchInput: {
     flex: 1,
-    fontSize: 14,
-    color: Colors.light.text,
-    fontFamily: 'Plus Jakarta Sans',
-    padding: 0,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.light.border,
-    marginVertical: Spacing.one,
-  },
-  searchButton: {
-    backgroundColor: Colors.light.secondary,
-    borderRadius: 12,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-    marginTop: Spacing.three,
-  },
-  searchButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
     fontSize: 15,
+    color: Colors.light.text,
+    height: 48,
+    fontFamily: 'Plus Jakarta Sans',
+  },
+  locationBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.light.primary,
+    marginHorizontal: 20,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 8,
+    marginBottom: 8,
+  },
+  locationBannerText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+    fontFamily: 'Plus Jakarta Sans',
   },
   sectionContainer: {
     paddingVertical: Spacing.four,
